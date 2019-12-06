@@ -1,0 +1,29 @@
+Set your username:
+git config --global user.name "FIRST_NAME LAST_NAME"
+Set your email address:
+git config --global user.email "MY_NAME@example.com"
+
+================================
+
+git init
+git remote add origin <remote repo>.git
+
+================================
+
+git rm -r --cached .
+git add .
+git commit -m 'Update .gitignore'
+
+=============git-clearHistory ===================
+
+-- Delete .git folder from disk
+rm -rf .git
+
+-- recreate the repo from the current content only (note old .gitignore is preserved)
+git init
+git add .
+git commit -m "Initial commit"
+
+-- push to the github remote repo ensuring you overwrite history
+git remote add origin https://github.com/<username>/<reponame>.git
+git push -u --force origin master

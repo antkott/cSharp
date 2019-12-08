@@ -52,5 +52,16 @@ namespace AntKott.Study.Searching
             //}
             return null;
         }
+
+        public bool IsSorted(List<int> inputList) {
+            for (int i = 0; i < inputList.Count-1; i++)
+            {
+                if (inputList[i]>inputList[i+1])
+                {
+                    return false;
+                }
+            }
+            return true;
+        }
     }
 }

@@ -1,5 +1,4 @@
-﻿using System;
-using System.Collections;
+﻿using System.Collections;
 using static System.Console;
 
 namespace Toolset
@@ -10,10 +9,19 @@ namespace Toolset
         public static void ShowItemsEnumerable(IEnumerable enumerable)
         {
             Write("[ ");
-            foreach (var item in enumerable)
+            foreach (object item in enumerable)
             {
-                Write(item + ", ");
+                if (item.GetType().ToString().Equals("System.Collections.DictionaryEntry"))
+                {
+                    DictionaryEntry itemdict = (DictionaryEntry)item;
+                    Write($"{itemdict.Key}:{itemdict.Value}, ");
+                }
+                else
+                {
+                    Write(item + ", ");
+                }
             }
+
             WriteLine(" ]");
         }
     }

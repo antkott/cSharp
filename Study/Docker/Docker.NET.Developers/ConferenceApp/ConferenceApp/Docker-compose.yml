@@ -1,0 +1,27 @@
+﻿version: '3'
+
+services: 
+  api:
+    image: conference/api
+    container_name: conference_api
+    build:
+      context: .
+    ports:
+      - 5000:80
+    environment:
+      ASPNETCORE_ENVIRONMENT: Production
+    depends_on:
+      - postgres
+  postgres:
+    image: postgres:9.6.3
+    container_name: conference_db
+    environment:
+      POSTGRES_DB: conference
+      POSTGRES_USER: conf_app
+      POSTGRES_PASSWORD: docker
+    ports:
+      - 5432:5432
+    volumes:
+      - ./db:/docker-entrypoint-initdb.d
+
+

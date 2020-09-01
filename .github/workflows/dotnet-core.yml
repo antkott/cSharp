@@ -4,7 +4,7 @@ on:
   push:
     branches: [ kafka-lens ]
   pull_request:
-    branches: [ kafka-lens ]
+    branches: [ master ]
 
 jobs:
   build:
@@ -18,13 +18,13 @@ jobs:
       uses: actions/setup-dotnet@v1      
       with:
         dotnet-version: 3.1.301
-    - name: LS
-      run: ls -R
-    - name: Install dependencies
-      run: dotnet restore
-      working-directory:  cSharp/Kafka.Lens
+    #- name: LS
+    #  run: ls -R
+    #- name: Install dependencies
+    #  run: dotnet restore
+    #  working-directory:  cSharp/Kafka.Lens
       
     - name: Build
-      run: dotnet build --configuration Release --no-restore
+      run: dotnet build Kafka.Lens/Kafka.Lens.sln --configuration Release
     - name: Test
-      run: dotnet test --no-restore --verbosity normal
+      run: dotnet test Kafka.Lens/Kafka.Lens.sln --no-restore --verbosity normal

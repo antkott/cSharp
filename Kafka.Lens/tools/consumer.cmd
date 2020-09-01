@@ -1,0 +1,1 @@
+d:\PRG\SYS\Kafka\kafka\bin\windows\kafka-console-consumer.bat --bootstrap-server localhost:9092 --topic test

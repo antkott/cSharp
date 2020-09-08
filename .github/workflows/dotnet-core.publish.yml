@@ -2,7 +2,7 @@ name: .NET Core Publish
 
 on:
   push:
-    branches: [ kafka-lens ]
+    branches: [ kafka-lens, master ]
   pull_request:
     branches: [ master ]
 

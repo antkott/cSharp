@@ -1,0 +1,36 @@
+name: .NET Core Publish
+
+on:
+  push:
+    branches: [ kafka-lens ]
+  pull_request:
+    branches: [ master ]
+
+jobs:
+  build:
+
+    runs-on: ubuntu-latest
+    
+
+    steps:
+    - uses: actions/checkout@v2
+    - name: Setup .NET Core
+      uses: actions/setup-dotnet@v1      
+      with:
+        dotnet-version: 3.1.301    
+      
+    - name: Build
+      run: dotnet build Kafka.Lens/Kafka.Lens.sln --configuration Release
+    - name: Test
+      run: dotnet test Kafka.Lens/Kafka.Lens.sln --no-restore --verbosity normal
+    - name: Publish
+      run: dotnet publish Kafka.Lens/Kafka.Lens.sln --configuration Release --no-restore --framework netcoreapp3.1 --self-contained false
+    #- name: LS
+    #  run: ls -R
+
+    # Upload the zip : https://github.com/marketplace/actions/upload-artifact
+    - name: Upload build artifacts
+      uses: actions/upload-artifact@v2
+      with:
+        name: Kafka.Lens
+        path: Kafka.Lens/src/Kafka.Lens.Runner/bin/Release/netcoreapp3.1/win-x64/publish

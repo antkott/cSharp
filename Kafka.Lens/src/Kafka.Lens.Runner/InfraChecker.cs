@@ -3,6 +3,7 @@ using Kafka.Lens.Backend;
 using Kafka.Lens.Backend.Tools;
 using NLog;
 using System;
+using System.Collections.Generic;
 
 namespace Kafka.Lens.Runner
 {
@@ -11,18 +12,24 @@ namespace Kafka.Lens.Runner
         private readonly Logger _logger = LogManager.GetCurrentClassLogger();
         private readonly Settings _setting = new SettingsReader().Settings;
 
+        public List<Report> StatusReportList { get; set; }
+
         public void Check()
         {
+            StatusReportList = new List<Report>();
             var clusters = _setting.General.Kafka.Clusters;
             var connectionTimeoutSec = _setting.General.Kafka.ConnectionTimeoutSec;
             var topicName = _setting.General.Kafka.TopicName;
             var date = DateTime.Now.ToString("dd.MM.yyyy.HH.m");
             topicName = $"{topicName}_{date}";
 
-            var counter = 0;
+            var counter = 0; 
             foreach (var cluster in clusters)
             {
                 counter++;
+                var statusReport = new Report();
+                statusReport.Number = counter;
+                statusReport.EnvName = cluster.Name;
                 _logger.Info($" [{counter}] from [{clusters.Count}]. " +
                     $"Work with the '{cluster.Name}' Kafka cluster");
                 var bootStrapServers = string.Join(",", cluster.BootstrapServers);
@@ -57,6 +64,21 @@ namespace Kafka.Lens.Runner
                 var mongoDbHelper = new MongoDbHelper();
                 var mongoDbConnectionStr = cluster.MongoDb;
                 var mongoDBStatus = mongoDbHelper.Ping(mongoDbConnectionStr, connectionTimeoutSec);
+                if (mongoDBStatus)
+                {
+                    statusReport.MongoStatus = "OK";
+                }
+                else {
+                    statusReport.MongoStatus = "ERROR";
+                }
+                if (topicWasCreated)
+                {
+                    statusReport.KafkaStatus = "OK";
+                }
+                else
+                {
+                    statusReport.KafkaStatus = "ERROR";
+                }
 
                 if (topicWasCreated && mongoDBStatus)
                 {
@@ -66,8 +88,10 @@ namespace Kafka.Lens.Runner
                 {
                     _logger.Error($"The '{cluster.Name}' Kafka cluster status is [ERROR]");
                 }
+                StatusReportList.Add(statusReport);
                 _logger.Info(string.Empty);
             }
-        }
+            new HtmlReportHelper().PopulateTemplate(StatusReportList);
+        }        
     }
 }

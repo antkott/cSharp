@@ -13,6 +13,7 @@ namespace Kafka.Lens.Runner
             ApplicationVersion.PrintAbout();
             var infraChecker = new InfraChecker();
             infraChecker.Check();
+            Console.ReadKey();
         }
     }
 }

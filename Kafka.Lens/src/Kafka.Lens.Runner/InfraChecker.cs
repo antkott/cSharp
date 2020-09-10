@@ -4,6 +4,7 @@ using Kafka.Lens.Backend.Tools;
 using NLog;
 using System;
 using System.Collections.Generic;
+using System.IO;
 
 namespace Kafka.Lens.Runner
 {
@@ -20,10 +21,18 @@ namespace Kafka.Lens.Runner
             var clusters = _setting.General.Kafka.Clusters;
             var connectionTimeoutSec = _setting.General.Kafka.ConnectionTimeoutSec;
             var topicName = _setting.General.Kafka.TopicName;
+            var certificateLocation = _setting.General.Kafka.SslCertificateLocation;
+            var certificateSubject = _setting.General.Kafka.SslCertificateSubject;
             var date = DateTime.Now.ToString("dd.MM.yyyy.HH.m");
             topicName = $"{topicName}_{date}";
 
-            var counter = 0; 
+            if (File.Exists(certificateLocation))
+            {
+                // delete an old certificate
+                File.Delete(certificateLocation);
+            }
+
+            var counter = 0;
             foreach (var cluster in clusters)
             {
                 counter++;
@@ -40,6 +49,18 @@ namespace Kafka.Lens.Runner
                     BootstrapServers = bootStrapServers,
                     SocketTimeoutMs = connectionTimeoutSec * 1000,
                 };
+                if (cluster.SslEnabled)
+                {
+                    _logger.Info("SSL connection is enabled for this cluster");
+                    if (!File.Exists(certificateLocation))
+                    {
+                        var certificate = CertificateHelper.GetCertificate(certificateSubject);
+                        CertificateHelper.ExportToPEMFile(certificate, certificateLocation);
+                    }
+                    clientConfig.SslCaLocation = certificateLocation;
+                    clientConfig.SecurityProtocol = SecurityProtocol.Ssl;
+                    clientConfig.Debug = "security";
+                }
                 var bootstrapServersCount = cluster.BootstrapServers.Count;
                 var topicHelper = new TopicHelper();
                 var topicWasCreated = false;
@@ -68,7 +89,8 @@ namespace Kafka.Lens.Runner
                 {
                     statusReport.MongoStatus = "OK";
                 }
-                else {
+                else
+                {
                     statusReport.MongoStatus = "ERROR";
                 }
                 if (topicWasCreated)
@@ -92,6 +114,6 @@ namespace Kafka.Lens.Runner
                 _logger.Info(string.Empty);
             }
             new HtmlReportHelper().PopulateTemplate(StatusReportList);
-        }        
+        }
     }
 }

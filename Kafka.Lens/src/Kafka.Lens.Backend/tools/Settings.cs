@@ -42,6 +42,11 @@
 
         [JsonProperty("ConnectionTimeoutSec", Required = Required.Always)]
         public int ConnectionTimeoutSec { get; set; }
+
+        [JsonProperty("SSLCertificateSubject")]
+        public string SslCertificateSubject { get; set; }
+
+        public string SslCertificateLocation { get; set; } = "kafka-broker.crt";
     }
 
     public partial class ClusterSetting
@@ -52,5 +57,8 @@
         [JsonProperty("BootstrapServers", Required = Required.Always)]
         public List<string> BootstrapServers { get; set; }
         public string MongoDb { get; set; }
+
+        [JsonProperty("SSLEnabled", Required = Required.Always)]
+        public bool SslEnabled { get; set; }
     }
 }

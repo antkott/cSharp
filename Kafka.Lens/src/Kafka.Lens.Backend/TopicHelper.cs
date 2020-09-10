@@ -100,7 +100,6 @@ namespace Kafka.Lens.Backend
                 {
                     throw;
                 }
-                return false;
             }
             return true;
         }

@@ -1,36 +1,64 @@
-name: .NET Core Publish
+name: Kafka.Lens build & publish
+
 
 on:
+  workflow_dispatch:
+    name:
+        description: 'Person to greet'
+        required: false
+        default: 'test'
   push:
-    branches: [ kafka-lens, master ]
+    paths-ignore:
+      - 'Kafka.Lens/srcbin/**'
+    branches: [ kafka-lens-*, master ]
   pull_request:
     branches: [ master ]
 
+env:
+  solution: 'Kafka.Lens/Kafka.Lens.sln'
+  buildPlatform: 'Any CPU'
+  buildConfiguration: 'Release'
+  targetFramework: 'netcoreapp3.1'
+
 jobs:
   build:
-
-    runs-on: ubuntu-latest
-    
+    runs-on: ubuntu-latest  
 
     steps:
     - uses: actions/checkout@v2
     - name: Setup .NET Core
-      uses: actions/setup-dotnet@v1      
+      uses: actions/setup-dotnet@v1
       with:
-        dotnet-version: 3.1.301    
+        dotnet-version: 3.1.301
       
     - name: Build
-      run: dotnet build Kafka.Lens/Kafka.Lens.sln --configuration Release
-    - name: Test
-      run: dotnet test Kafka.Lens/Kafka.Lens.sln --no-restore --verbosity normal
+      run: dotnet build $solution --configuration $buildConfiguration
+    #- name: Test
+    # run: dotnet test $solution --no-restore --verbosity normal
     - name: Publish
-      run: dotnet publish Kafka.Lens/Kafka.Lens.sln --configuration Release --no-restore --framework netcoreapp3.1 --self-contained false
+      run: dotnet publish $solution --configuration $buildConfiguration --no-restore --framework $targetFramework --self-contained false
     #- name: LS
     #  run: ls -R
+    #- name: print
+    #  run: |
+    #    echo **/Kafka.Lens.Runner/bin/$(buildConfiguration)/$(targetFramework)/win-x64/publish/*.dll
+    #    echo **/Kafka.Lens.Runner/bin/'$(buildConfiguration)'/'$(targetFramework)'/win-x64/publish/*.dll
+    #    echo **/Kafka.Lens.Runner/bin/$buildConfiguration/$targetFramework/win-x64/publish/*.dll
+    #    echo $buildConfiguration
 
     # Upload the zip : https://github.com/marketplace/actions/upload-artifact
     - name: Upload build artifacts
       uses: actions/upload-artifact@v2
       with:
         name: Kafka.Lens
-        path: Kafka.Lens/src/Kafka.Lens.Runner/bin/Release/netcoreapp3.1/win-x64/publish
+        path: |
+          Kafka.Lens/src/Kafka.Lens.Runner/bin/Release/netcoreapp3.1/win-x64/publish       
+        if-no-files-found: error
+
+       # name: Kafka.Lens
+       # path: |
+       #   Kafka.Lens/src/Kafka.Lens.Runner/bin/Release/netcoreapp3.1/win-x64/publish/*dll 
+       #   Kafka.Lens/src/Kafka.Lens.Runner/bin/Release/netcoreapp3.1/win-x64/publish/appSettings.json
+       #   Kafka.Lens/src/Kafka.Lens.Runner/bin/Release/netcoreapp3.1/win-x64/publish/*exe
+       #   Kafka.Lens/src/Kafka.Lens.Runner/bin/Release/netcoreapp3.1/win-x64/publish/*htm        
+       # if-no-files-found: error

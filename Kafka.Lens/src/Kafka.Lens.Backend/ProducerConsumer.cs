@@ -21,7 +21,7 @@ namespace Kafka.Lens.Backend
         private readonly string _key = "kafka.lens.test.key";
         private readonly int _numMessages = 3;
 
-        public void Produce(ClientConfig config, string topic)
+        public int Produce(ClientConfig config, string topic)
         {
             _logger.Info($"  Produce to the '{topic}' topic: ");
             using (var producer = new ProducerBuilder<string, string>(config).Build())
@@ -48,11 +48,12 @@ namespace Kafka.Lens.Backend
                 producer.Flush(TimeSpan.FromSeconds(10));
 
                 _logger.Info($"{numProduced} messages were produced to topic {topic}");
+                return numProduced;
             }
         }
 
 
-        public void Consume(ClientConfig config, string topic)
+        public int Consume(ClientConfig config, string topic)
         {
             _logger.Info($"  Read from the '{topic}' topic:");
             var consumerConfig = new ConsumerConfig(config)
@@ -94,8 +95,8 @@ namespace Kafka.Lens.Backend
                 finally
                 {
                     consumer.Close();
-                }
-                _logger.Info($" * Produced messages == consumed messages: '{totalCount}' - [ok]");
+                }                
+                return totalCount;
             }
         }
     }

@@ -10,7 +10,7 @@ These instructions will get you a copy of the project up and running on your loc
 ### Prerequisites
 
 1. Install [.NETCore 3.1 Runtime](https://dotnet.microsoft.com/download/dotnet-core/3.1)
-2. Download [current build in zip file](https://github.com/antkott/cSharp/blob/master/Kafka.Lens/srcbin/Kafka.Lens.zip) (currently available only for win-64 system)
+2. Download [current prerelease v.0.1](https://github.com/antkott/cSharp/releases/tag/v0.1) (currently available only for win-64 system)
 3. Unzip Kafka.Lens.zip and fill in appSettings.json with your Kafka & Mongo parameters
 4. Run console application Kafka.Lens.Runner.exe 
 
@@ -18,9 +18,9 @@ These instructions will get you a copy of the project up and running on your loc
 ## Deployment & build
 ![Kafka.Lens build & publish](https://github.com/antkott/cSharp/workflows/Kafka.Lens%20build%20&%20publish/badge.svg)
 
-## Versioning
+## Releases
 
-We use [SemVer](http://semver.org/) for versioning. For the versions available, see the [tags on this repository](https://github.com/antkott/cSharp/tags). 
+See [Releases](https://github.com/antkott/cSharp/releases) page for details
 
 ## Authors
 

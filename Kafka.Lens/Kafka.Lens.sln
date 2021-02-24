@@ -13,7 +13,9 @@ Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "configs", "configs", "{990E
 		configs\NLog.config = configs\NLog.config
 	EndProjectSection
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Kafka.Lens.Runner", "src\Kafka.Lens.Runner\Kafka.Lens.Runner.csproj", "{45B8FAB0-0E25-45E8-9E82-D4286D0C7729}"
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "Kafka.Lens.Runner", "src\Kafka.Lens.Runner\Kafka.Lens.Runner.csproj", "{45B8FAB0-0E25-45E8-9E82-D4286D0C7729}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Kafka.Lens.Ui", "src\Kafka.Lens.Ui\Kafka.Lens.Ui.csproj", "{9B0D010E-04B0-4F64-B146-271AAE9AA743}"
 EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
@@ -29,6 +31,10 @@ Global
 		{45B8FAB0-0E25-45E8-9E82-D4286D0C7729}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{45B8FAB0-0E25-45E8-9E82-D4286D0C7729}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{45B8FAB0-0E25-45E8-9E82-D4286D0C7729}.Release|Any CPU.Build.0 = Release|Any CPU
+		{9B0D010E-04B0-4F64-B146-271AAE9AA743}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{9B0D010E-04B0-4F64-B146-271AAE9AA743}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{9B0D010E-04B0-4F64-B146-271AAE9AA743}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{9B0D010E-04B0-4F64-B146-271AAE9AA743}.Release|Any CPU.Build.0 = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE

@@ -351,3 +351,5 @@ MigrationBackup/
 .ionide/
 
 wwwroot/
+*.exe
+/Study/

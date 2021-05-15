@@ -4,7 +4,7 @@ using System.Text;
 
 namespace Kafka.Lens.Backend.Report
 {
-    public class Report
+    public class InfraReport
     {
         public int Number { get; set; }
 

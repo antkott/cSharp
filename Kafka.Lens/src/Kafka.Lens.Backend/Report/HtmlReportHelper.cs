@@ -10,7 +10,7 @@ namespace Kafka.Lens.Backend.Report
     {
         //https://www.tablesgenerator.com/html_tables
 
-        public string PopulateTemplate(List<Report> reportList)
+        public string PopulateTemplate(List<InfraReport> reportList)
         {
             string body = string.Empty;
             using (StreamReader reader = new StreamReader(@"template.htm"))

@@ -1,16 +1,21 @@
 ﻿using Kafka.Lens.Backend.Report;
+using Kafka.Lens.Backend.Tools;
 using MongoDB.Driver;
-using NLog;
 using System;
-using System.Collections.Generic;
 
 namespace Kafka.Lens.Backend
 {
     public class MongoDbHelper
     {
-        private readonly Logger _logger = LogManager.GetCurrentClassLogger();
-        public string Ping(string connectionString, int timeoutSec)
+        public StatusCheckResult Ping(string connectionString, int timeoutSec, string initialLogMessage)
         {
+            var logStashHelper = new LogHelper(initialLogMessage);
+            logStashHelper.Info("Checking Mongo DB:");
+            var statusCheckResult = new StatusCheckResult
+            {
+                InfraType = InfraType.Mongo,
+                Status = ReportStatus.Undefined
+            };
             var connectionArray = connectionString.Split(":");
             var dbClient = new MongoClient(new MongoClientSettings
             {
@@ -24,24 +29,26 @@ namespace Kafka.Lens.Backend
             try
             {
                 var dbList = dbClient.ListDatabases().ToList();
-                _logger.Info($"received '{dbList.Count}' DBs");
+                logStashHelper.Info($"received '{dbList.Count}' DBs");
                 if (dbList.Count > 0)
                 {
-                    _logger.Info($" * The '{connectionString}' Mongo DB status - [{ReportStatus.Ok}]");
-                    return ReportStatus.Ok;
+                    logStashHelper.Info($" * The '{connectionString}' Mongo DB status - [{ReportStatus.Ok}]");
+                    statusCheckResult.Status = ReportStatus.Ok;
                 }
                 else
                 {
-                    _logger.Error($" * The '{connectionString}' Mongo DB status - [{ReportStatus.Error}]");
-                    return ReportStatus.Error;
+                    logStashHelper.Error($" * The '{connectionString}' Mongo DB status - [{ReportStatus.Error}]");
+                    statusCheckResult.Status = ReportStatus.Error;
                 }
             }
             catch (Exception e)
             {
-                // _logger.Error(e.Message);
-                _logger.Error($" * The '{connectionString}' Mongo DB status - [{ReportStatus.Error}]");
-                return ReportStatus.Error;
+                // logStashHelper.Error(e.Message);
+                logStashHelper.Error($" * The '{connectionString}' Mongo DB status - [{ReportStatus.Error}]");
+                statusCheckResult.Status = ReportStatus.Error;
             }
+            statusCheckResult.LogOutput = logStashHelper.LogStash;
+            return statusCheckResult;
         }
     }
 }

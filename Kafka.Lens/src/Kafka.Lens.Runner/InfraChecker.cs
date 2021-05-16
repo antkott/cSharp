@@ -6,6 +6,7 @@ using NLog;
 using System;
 using System.Collections.Generic;
 using System.IO;
+using System.Threading.Tasks;
 
 namespace Kafka.Lens.Runner
 {
@@ -25,7 +26,7 @@ namespace Kafka.Lens.Runner
             var topicNameFromSettings = _setting.General.Kafka.TopicName;
             var certificateLocation = _setting.General.Kafka.SslCertificateLocation;
             var certificateSubject = _setting.General.Kafka.SslCertificateSubject;
-            
+
 
 
             if (File.Exists(certificateLocation))
@@ -34,7 +35,10 @@ namespace Kafka.Lens.Runner
                 File.Delete(certificateLocation);
             }
 
+            var mongoDbHelper = new MongoDbHelper();
+            var kafkaHelper = new KafkaHelper();
             var counter = 0;
+            var tasksList = new List<Task<StatusCheckResult>>();
             foreach (var cluster in clusters)
             {
                 counter++;
@@ -44,24 +48,25 @@ namespace Kafka.Lens.Runner
                 var statusReport = new InfraReport();
                 statusReport.Number = counter;
                 statusReport.EnvName = cluster.Name;
-                _logger.Info($" [{counter}] from [{clusters.Count}]. " +
-                    $"Work with the '{cluster.Name}' cluster");
+                var initialMessage = $"Work with the '{cluster.Name}' cluster";
+                _logger.Info($" Add status check task -  [{counter}] from [{clusters.Count}]. " +
+                    $" {initialMessage}");
 
                 // Check Mongo
-                _logger.Info($"Checking Mongo DB:");
-                var mongoDbHelper = new MongoDbHelper();
-                var mongoDbConnectionStr = cluster.MongoDb;
-                mongoDbStatus = mongoDbHelper.Ping(mongoDbConnectionStr, connectionTimeoutSec);
+                var taskMongo = new Task<StatusCheckResult>(() => mongoDbHelper.Ping(cluster.MongoDb, connectionTimeoutSec, initialMessage));
+                tasksList.Add(taskMongo);
+                taskMongo.Start();
 
                 // Check Kafka
-                _logger.Info("Checking Kafka:");
-                var kafkaHelper = new KafkaHelper();
-                kafkaStatus = kafkaHelper.CheckStatus(_setting, cluster);
-
-                WriteClusterStatus(cluster, statusReport, mongoDbStatus, kafkaStatus);
-                StatusReportList.Add(statusReport);
-                _logger.Info(string.Empty);
+                //_logger.Info("Checking Kafka:");
+                //var taskKafka = new Task<string>(() => kafkaHelper.CheckStatus(_setting, cluster));
+                //tasksList.Add(taskKafka);
+                //taskKafka.Start();
+                //WriteClusterStatus(cluster, statusReport, mongoDbStatus, kafkaStatus);
+                //StatusReportList.Add(statusReport);
+                //_logger.Info(string.Empty);
             }
+            Task.WaitAll(tasksList.ToArray());
             new HtmlReportHelper().PopulateTemplate(StatusReportList);
         }
 
@@ -77,11 +82,11 @@ namespace Kafka.Lens.Runner
 
             if (kafkaStatus.Equals(ReportStatus.Ok) && mongoStatus.Equals(ReportStatus.Ok))
             {
-                _logger.Info($"The '{cluster.Name}' status is [{ReportStatus.Ok.ToUpper()}]");
+                _logger.Info($"The '{cluster.Name}' status is [{ReportStatus.Ok}]");
             }
             else
             {
-                _logger.Error($"The '{cluster.Name}' status is [{ReportStatus.Error.ToUpper()}]");
+                _logger.Error($"The '{cluster.Name}' status is [{ReportStatus.Error}]");
             }
         }
     }

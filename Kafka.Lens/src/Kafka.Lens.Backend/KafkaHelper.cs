@@ -106,7 +106,7 @@ namespace Kafka.Lens.Backend
             return true;
         }
 
-        public string CheckStatus(Settings setting, ClusterSetting cluster)
+        public ReportStatus CheckStatus(Settings setting, ClusterSetting cluster)
         {
             var connectionTimeoutSec = setting.General.Kafka.ConnectionTimeoutSec;
             var topicNameFromSettings = setting.General.Kafka.TopicName;

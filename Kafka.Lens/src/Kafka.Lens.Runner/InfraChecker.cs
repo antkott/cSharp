@@ -67,6 +67,14 @@ namespace Kafka.Lens.Runner
                 //_logger.Info(string.Empty);
             }
             Task.WaitAll(tasksList.ToArray());
+            _logger.Info(string.Empty);
+            _logger.Info("REPORT");
+            foreach (var statusCheckResult in tasksList)
+            {
+                if (statusCheckResult.Result.InfraType == InfraType.Mongo) {
+                    _logger.Info(statusCheckResult.Result.LogOutput);
+                }
+            }
             new HtmlReportHelper().PopulateTemplate(StatusReportList);
         }
 

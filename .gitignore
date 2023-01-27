@@ -353,3 +353,4 @@ MigrationBackup/
 wwwroot/
 *.exe
 /Study/
+/QMaticWebBookingParser/configs/appSettings.json

@@ -10,8 +10,6 @@
 
         public int AttemptsDelaySec { get; set; }
 
-        public string NoPlacesMessage { get; set; }
-
         public bool HideSeleniumExecution { get; set; }
 
         public int SearchDepthMonth { get; set; }
@@ -23,12 +21,16 @@
     {
         public string Url { get; set; }
 
+        public string NoPlacesMessage { get; set; }
+
         public int ServiceNumber { get; set; }
     }
 
     public class Brno
     {
         public string Url { get; set; }
+
+        public string NoPlacesMessage { get; set; }
 
         public int ServiceNumber { get; set; }
     }

@@ -27,3 +27,39 @@ git commit -m "Initial commit"
 -- push to the github remote repo ensuring you overwrite history
 git remote add origin https://github.com/<username>/<reponame>.git
 git push -u --force origin master
+
+
+######### cSharp ###############
+
+mkdir /f/backup/Repo/cSharp
+git init --bare /f/backup/Repo/cSharp
+git remote add --mirror=push backupF file:///F/backup/Repo/cSharp
+git push backupF
+
+mkdir /c/backup/Repo/cSharp
+git init --bare /c/backup/Repo/cSharp
+git remote add --mirror=push backupC file:///C/backup/Repo/cSharp
+git push backupC
+
+######### Powershell ###############
+
+mkdir /f/backup/Repo/Powershell
+git init --bare /f/backup/Repo/Powershell
+git remote add --mirror=push backupF file:///F/backup/Repo/Powershell
+git push backupF
+
+mkdir /c/backup/Repo/Powershell
+git init --bare /c/backup/Repo/Powershell
+git remote add --mirror=push backupC file:///C/backup/Repo/Powershell
+git push backupC
+
+
+############# GIT.MAINTAIN
+git checkout develop
+git pull --prune
+git gc --auto
+git fsck --full
+
+######## DIVERGED
+git reset --hard origin/master
+git reset --hard origin/develop

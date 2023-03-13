@@ -1,4 +1,5 @@
-﻿using OpenQA.Selenium;
+﻿using Microsoft.Extensions.Options;
+using OpenQA.Selenium;
 using OpenQA.Selenium.Chrome;
 using OpenQA.Selenium.DevTools.V107.DOMSnapshot;
 using OpenQA.Selenium.Support.UI;
@@ -16,7 +17,7 @@ namespace QMaticWebBookingParser
         private readonly ChromeDriverService _chromeDriverService;
         private readonly ChromeDriver _driver;
         private bool _pageAlreadyOpened;
-        private bool _brnoComplainCoverShown;
+        private bool _parisComplainCoverShown;
         private bool _disposed;
 
         public Parser(
@@ -32,9 +33,23 @@ namespace QMaticWebBookingParser
             _silentOptions.AddArgument("log-level=3");
             _parserSettings = parserSettings;
 
+            var proxyOptions = new ChromeOptions();
+            //var proxy = new Proxy
+            //{
+            //    Kind = ProxyKind.Manual,
+            //    IsAutoDetect = false,
+            //    SocksUserName = "freeopenvpn",
+            //    SocksPassword= "428451887",
+            //    SslProxy = "us1.freeopenvpn.org:443",
+            //    SocksProxy = "us1.freeopenvpn.org:443"
+            //};
+            //proxyOptions.Proxy = proxy;
+            proxyOptions.AddArgument("ignore-certificate-errors");
+            proxyOptions.AddExtension(@"extension_3_68_0_0.crx");
+
             _driver = _parserSettings.HideSeleniumExecution ?
                new ChromeDriver(_chromeDriverService, _silentOptions) :
-               new ChromeDriver(_chromeDriverService);
+               new ChromeDriver(_chromeDriverService, proxyOptions);
         }
 
 
@@ -80,6 +95,10 @@ namespace QMaticWebBookingParser
             if (_parserSettings.City.Equals("Brno"))
             {
                 return await ParseBrno(_driver, dic);
+            }
+            if (_parserSettings.City.Equals("Pari"))
+            {
+                return await ParsePari(_driver, dic);
             }
             throw new NotImplementedException($"City {_parserSettings.City} not implemented yet");
         }
@@ -163,11 +182,11 @@ namespace QMaticWebBookingParser
                 driver.Navigate().GoToUrl(_parserSettings.CityBrno.Url);
                 driver.ExecuteScript($"document.title = '{_parserSettings.City}|Parser'");
                 WaitTillElementAppeared(waitForElement, className: "MuiInput-root");
-                if (!_brnoComplainCoverShown)
+                if (!_parisComplainCoverShown)
                 {
                     //complain cover
                     await FindClickWait(@"(//span[contains(@class,'MuiButton-label')])[2]");
-                    _brnoComplainCoverShown = true;
+                    _parisComplainCoverShown = true;
                 }
 
                 //country
@@ -224,6 +243,88 @@ namespace QMaticWebBookingParser
                 resultDictionary.Add(string.Empty, noPlaces.Text);
             }
 
+            _pageAlreadyOpened = true;
+            return resultDictionary;
+        }
+
+        public async Task<Dictionary<string, string>> ParsePari(
+            ChromeDriver driver,
+            Dictionary<string, string> resultDictionary)
+        {
+            WebDriverWait waitForElement = new(driver, TimeSpan.FromSeconds(30));
+            waitForElement.IgnoreExceptionTypes(typeof(WebDriverTimeoutException));
+            waitForElement.IgnoreExceptionTypes(typeof(ElementNotInteractableException));
+
+            if (!_pageAlreadyOpened)
+            {
+                Console.WriteLine("TurnOn VPN and press ENTER");
+                Console.ReadKey();
+                driver.Navigate().GoToUrl(_parserSettings.CityPari.Url);
+               
+
+                driver.ExecuteScript($"document.title = '{_parserSettings.City}|Parser'");
+                WaitTillElementAppeared(waitForElement, className: "MuiInput-root");
+                if (!_parisComplainCoverShown)
+                {
+                    //complain cover
+                    await FindClickWait(@"(//span[contains(@class,'MuiButton-label')])[2]");
+                    _parisComplainCoverShown = true;
+                }
+
+                //country
+                await FindClickWait(@"//input[@name='country']");
+                await FindClickWait(@"//li[contains(@data-option-index,'76')]");
+
+                //recaptcha
+                Thread.Sleep(3000);
+                driver.SwitchTo().Frame(driver.FindElement(By.CssSelector("iframe[src*='recaptcha']")));
+                WebDriverWait waitForElementReCaptcha = new(driver, TimeSpan.FromMinutes(5));
+                WaitTillElementAppeared(waitForElementReCaptcha, className: null, xPath: "//label[contains(.,'Я не робот')]");
+                await FindClickWait(@"//div[@class='recaptcha-checkbox-border']");
+
+                //consulate
+                WaitTillElementAppeared(waitForElement, className: null, xPath: "//input[@name='consulates']");
+                await FindClickWait(@"//input[@name='consulates']");
+                await FindClickWait(@"//li[contains(@id,'consulates-option-0')]");
+
+                driver.SpoofCookie("__cf_bm");
+            }
+
+            if (_pageAlreadyOpened)
+            {
+                // change templorary catergory & service to different for refresh page wihout reCaptcha
+                await FindClickWait(@"//input[contains(@name,'category')]");
+                await FindClickWait(@"//li[contains(@id,'categories-option-1')]");
+                try
+                {
+                    await FindClickWait(@"//input[@name='service']");
+                    await FindClickWait(@"//li[contains(@id,'services-option-1')]");
+                }
+                catch
+                {
+                    _pageAlreadyOpened = false;
+                    SoundHelper.PlayAttention();
+                    resultDictionary.Add(string.Empty, _parserSettings.CityBrno.NoPlacesMessage);
+                    return resultDictionary;
+                }
+            }
+            //category
+            await FindClickWait(@"//input[contains(@name,'category')]");
+            await FindClickWait(@"//li[contains(@id,'categories-option-0')]");
+
+            //services
+            await FindClickWait(@"//input[@name='service']");
+            await FindClickWait(@"//li[contains(@id,'services-option-0')]");
+
+            var noPlaces = WaitTillElementAppeared(waitForElement, className: null, xPath: @$"//p[contains(.,'{_parserSettings.CityBrno.NoPlacesMessage}')]");
+            if (noPlaces == null)
+            {
+                resultDictionary.Add(string.Empty, "ALARM! Places found");
+            }
+            else
+            {
+                resultDictionary.Add(string.Empty, noPlaces.Text);
+            }
             _pageAlreadyOpened = true;
             return resultDictionary;
         }

@@ -8,6 +8,8 @@
 
         public Brno CityBrno { get; set; }
 
+        public Pari CityPari { get; set; }
+
         public int AttemptsDelaySec { get; set; }
 
         public bool HideSeleniumExecution { get; set; }
@@ -27,6 +29,15 @@
     }
 
     public class Brno
+    {
+        public string Url { get; set; }
+
+        public string NoPlacesMessage { get; set; }
+
+        public int ServiceNumber { get; set; }
+    }
+
+    public class Pari
     {
         public string Url { get; set; }
 

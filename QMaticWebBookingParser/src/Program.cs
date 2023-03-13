@@ -5,6 +5,9 @@ using Microsoft.Extensions.Logging;
 using NLog.Extensions.Logging;
 using QMaticWebBookingParser;
 
+
+//https://chromedriver.storage.googleapis.com/index.html?path=110.0.5481.77/
+
 var configuration = new ConfigurationBuilder()
        .AddEnvironmentVariables()
        .AddCommandLine(args)
@@ -23,9 +26,11 @@ using IHost host = Host
         IConfiguration config = context.Configuration;
         Prague pragueSettings = config.GetSection("Prague").Get<Prague>();
         Brno brnoSettings = config.GetSection("Brno").Get<Brno>();
+        Pari pariSettings = config.GetSection("Pari").Get<Pari>();
         ParserSettings settings = config.Get<ParserSettings>();
         settings.CityPrague = pragueSettings;
         settings.CityBrno = brnoSettings;
+        settings.CityPari = pariSettings;
         services.AddSingleton(settings);
         services.AddHostedService<ParserWorker>();
     })

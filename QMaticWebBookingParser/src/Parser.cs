@@ -1,17 +1,22 @@
 ﻿using OpenQA.Selenium;
 using OpenQA.Selenium.Chrome;
+using OpenQA.Selenium.DevTools.V107.DOMSnapshot;
 using OpenQA.Selenium.Support.UI;
+using QMaticWebBookingParser.Helpers;
 using System.Diagnostics;
+using System.Media;
+using System.Net;
+using Cookie = OpenQA.Selenium.Cookie;
 
 namespace QMaticWebBookingParser
 {
     public class Parser : IDisposable
     {
         private readonly ParserSettings _parserSettings;
-        private readonly ChromeOptions _silentOptions;
         private readonly ChromeDriverService _chromeDriverService;
         private readonly ChromeDriver _driver;
         private bool _pageAlreadyOpened;
+        private bool _brnoComplainCoverShown;
         private bool _disposed;
 
         public Parser(
@@ -21,7 +26,7 @@ namespace QMaticWebBookingParser
             _chromeDriverService.SuppressInitialDiagnosticInformation = true;
             _chromeDriverService.HideCommandPromptWindow = true;
 
-            _silentOptions = new ChromeOptions();
+            var _silentOptions = new ChromeOptions();
             _silentOptions.AddArgument("--silent");
             _silentOptions.AddArgument("headless");
             _silentOptions.AddArgument("log-level=3");
@@ -68,7 +73,6 @@ namespace QMaticWebBookingParser
             {
                 return dic;
             }
-
             if (_parserSettings.City.Equals("Prague"))
             {
                 return await ParsePrague(_driver, dic);
@@ -84,6 +88,9 @@ namespace QMaticWebBookingParser
             ChromeDriver driver,
             Dictionary<string, string> resultDictionary)
         {
+            WebDriverWait waitForElement = new(driver, TimeSpan.FromSeconds(30));
+            waitForElement.IgnoreExceptionTypes(typeof(WebDriverTimeoutException));
+            waitForElement.IgnoreExceptionTypes(typeof(ElementNotInteractableException));
             if (_pageAlreadyOpened)
             {
                 driver.Navigate().Refresh();
@@ -93,11 +100,8 @@ namespace QMaticWebBookingParser
                 driver.Navigate().GoToUrl(_parserSettings.CityPrague.Url);
                 _pageAlreadyOpened = true;
             }
-
-            driver.Url = _parserSettings.CityPrague.Url;
-            await Task.Delay(_parserSettings.ClickDelayMs);
-            WebDriverWait waitForElement = new(driver, TimeSpan.FromSeconds(30));
-            waitForElement.Until(e => e.FindElement(By.ClassName("process-step-name")));
+            driver.ExecuteScript($"document.title = '{_parserSettings.City}|Parser'");
+            WaitTillElementAppeared(waitForElement, className: "process-step-name");
 
             //branch cover
             await FindClickWait("(//div[@class='flex'])[4]");
@@ -150,41 +154,77 @@ namespace QMaticWebBookingParser
             ChromeDriver driver,
             Dictionary<string, string> resultDictionary)
         {
-            driver.Url = _parserSettings.CityBrno.Url;
-            await Task.Delay(_parserSettings.ClickDelayMs);
             WebDriverWait waitForElement = new(driver, TimeSpan.FromSeconds(30));
-            waitForElement.Until(e => e.FindElement(By.ClassName("MuiInput-root")));
+            waitForElement.IgnoreExceptionTypes(typeof(WebDriverTimeoutException));
+            waitForElement.IgnoreExceptionTypes(typeof(ElementNotInteractableException));
 
-            var complainCover = driver.FindElement(By.XPath(@"(//span[contains(@class,'MuiButton-label')])[2]"));
-            complainCover?.Click();
-            await Task.Delay(_parserSettings.ClickDelayMs);
+            if (!_pageAlreadyOpened)
+            {
+                driver.Navigate().GoToUrl(_parserSettings.CityBrno.Url);
+                driver.ExecuteScript($"document.title = '{_parserSettings.City}|Parser'");
+                WaitTillElementAppeared(waitForElement, className: "MuiInput-root");
+                if (!_brnoComplainCoverShown)
+                {
+                    //complain cover
+                    await FindClickWait(@"(//span[contains(@class,'MuiButton-label')])[2]");
+                    _brnoComplainCoverShown = true;
+                }
 
-            string country = @"Чехія";
-            var countryDropDownList = driver.FindElement(By.XPath(@"//input[@name='country']"));
-            countryDropDownList?.Click();
-            await Task.Delay(_parserSettings.ClickDelayMs);
-            var countryFromDropDownList = driver.FindElement(By.XPath(@"//li[contains(@data-option-index,'78')]"));
-            countryFromDropDownList?.Click();
-            await Task.Delay(_parserSettings.ClickDelayMs + 1500);
+                //country
+                await FindClickWait(@"//input[@name='country']");
+                await FindClickWait(@"//li[contains(@data-option-index,'78')]");
 
-            driver.SwitchTo().Frame(driver.FindElement(By.CssSelector("iframe[src*='recaptcha']")));
-            waitForElement.Until(e => e.FindElement(By.XPath(@"//label[contains(.,'Я не робот')]")));
-            var recaptcha = driver.FindElement(By.XPath(@"//div[@class='recaptcha-checkbox-border']"));
-            recaptcha?.Click();
-            await Task.Delay(_parserSettings.ClickDelayMs + 1500);
+                //recaptcha
+                driver.SwitchTo().Frame(driver.FindElement(By.CssSelector("iframe[src*='recaptcha']")));
+                WebDriverWait waitForElementReCaptcha = new(driver, TimeSpan.FromMinutes(5));
+                WaitTillElementAppeared(waitForElementReCaptcha, className: null, xPath: "//label[contains(.,'Я не робот')]");
+                await FindClickWait(@"//div[@class='recaptcha-checkbox-border']");
 
-            var consulatDropDownList = driver.FindElement(By.XPath(@"//input[@name='consulate']"));
-            consulatDropDownList?.Click();
-            await Task.Delay(_parserSettings.ClickDelayMs);
-            var consulatFromDropDownList = driver.FindElement(By.XPath(@"//li[contains(@id,'consulates-option-0')]"));
-            consulatFromDropDownList?.Click();
-            await Task.Delay(_parserSettings.ClickDelayMs);
+                //consulate
+                WaitTillElementAppeared(waitForElement, className: null, xPath: "//input[@name='consulate']");
+                await FindClickWait(@"//input[@name='consulate']");
+                await FindClickWait(@"//li[contains(@id,'consulates-option-0')]");
 
+                driver.SpoofCookie("__cf_bm");
+            }
 
-            Thread.Sleep(TimeSpan.FromSeconds(30));
+            if (_pageAlreadyOpened)
+            {
+                // change templorary catergory & service to different for refresh page wihout reCaptcha
+                await FindClickWait(@"//input[contains(@name,'category')]");
+                await FindClickWait(@"//li[contains(@id,'categories-option-1')]");
+                try
+                {
+                    await FindClickWait(@"//input[@name='service']");
+                    await FindClickWait(@"//li[contains(@id,'services-option-1')]");
+                }
+                catch
+                {
+                    _pageAlreadyOpened = false;
+                    SoundHelper.PlayAttention();
+                    resultDictionary.Add(string.Empty, _parserSettings.CityBrno.NoPlacesMessage);
+                    return resultDictionary;
+                }
+            }
+            //category
+            await FindClickWait(@"//input[contains(@name,'category')]");
+            await FindClickWait(@"//li[contains(@id,'categories-option-0')]");
 
-            //SelectElement dropDown = new SelectElement(countryDropDownList);
-            //dropDown.SelectByValue(country);
+            //services
+            await FindClickWait(@"//input[@name='service']");
+            await FindClickWait(@"//li[contains(@id,'services-option-0')]");
+
+            var noPlaces = WaitTillElementAppeared(waitForElement, className: null, xPath: @$"//p[contains(.,'{_parserSettings.CityBrno.NoPlacesMessage}')]");
+            if (noPlaces == null)
+            {
+                resultDictionary.Add(string.Empty, "ALARM! Places found");
+            }
+            else
+            {
+                resultDictionary.Add(string.Empty, noPlaces.Text);
+            }
+
+            _pageAlreadyOpened = true;
             return resultDictionary;
         }
 
@@ -198,5 +238,25 @@ namespace QMaticWebBookingParser
             }
             return webElement;
         }
+
+        private IWebElement? WaitTillElementAppeared(
+            WebDriverWait waitForElement,
+            string? className,
+            string? xPath = null)
+        {
+            if (!string.IsNullOrEmpty(className)
+                && waitForElement.Until(e => e.FindElements(By.ClassName($@"{className}")).Any()))
+            {
+                return _driver.FindElement(By.ClassName($@"{className}"));
+            }
+            if (!string.IsNullOrEmpty(xPath)
+                && waitForElement.Until(e => e.FindElements(By.XPath($@"{xPath}")).Any()))
+            {
+                return FindClickWait(xPath, false)?.Result;
+            }
+            return null;
+        }
+
+
     }
 }

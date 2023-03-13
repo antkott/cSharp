@@ -78,7 +78,7 @@ namespace QMaticWebBookingParser
                         {
                             return;
                         }
-                        _logger.LogError($"exp: {ex}");
+                        _logger.LogError($"{ex.Message}");
                         _specialLogger.Info("error");
                         _logger.LogInformation($"wait before restarting");
                         await Task.Delay(1_000, stoppingToken);

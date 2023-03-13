@@ -33,6 +33,10 @@ namespace QMaticWebBookingParser
             {
                 noPlacesMessages = _parserSettings.CityBrno.NoPlacesMessage;
             }
+            if (city.Equals("Pari"))
+            {
+                noPlacesMessages = _parserSettings.CityPari.NoPlacesMessage;
+            }
             try
             {
                 while (!stoppingToken.IsCancellationRequested)
@@ -83,7 +87,6 @@ namespace QMaticWebBookingParser
                         _logger.LogInformation($"wait before restarting");
                         await Task.Delay(1_000, stoppingToken);
                         _logger.LogInformation($"restarting...");
-
                     }
                 }
             }
